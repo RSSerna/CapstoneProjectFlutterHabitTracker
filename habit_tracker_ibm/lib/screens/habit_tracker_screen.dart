@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:habit_tracker_ibm/screens/add_habit_screen.dart';
 
 class HabitTrackerScreen extends StatefulWidget {
   final String username;
@@ -6,10 +7,10 @@ class HabitTrackerScreen extends StatefulWidget {
   const HabitTrackerScreen({super.key, required this.username});
 
   @override
-  _HabitTrackerScreenState createState() => _HabitTrackerScreenState();
+  HabitTrackerScreenState createState() => HabitTrackerScreenState();
 }
 
-class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
+class HabitTrackerScreenState extends State<HabitTrackerScreen> {
   Map<String, String> selectedHabitsMap = {};
   Map<String, String> completedHabitsMap = {};
   String name = '';
@@ -180,7 +181,14 @@ class _HabitTrackerScreenState extends State<HabitTrackerScreen> {
       ),
       floatingActionButton: selectedHabitsMap.isEmpty
           ? FloatingActionButton(
-              onPressed: () {},
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => AddHabitScreen(),
+                  ),
+                );
+              },
               backgroundColor: Colors.blue.shade700,
               tooltip: 'Add Habits',
               child: const Icon(Icons.add),
