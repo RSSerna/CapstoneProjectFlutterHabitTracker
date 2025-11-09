@@ -1,6 +1,11 @@
-import 'package:flutter/material.dart';
-import 'package:habit_tracker_ibm/screens/habit_tracker_screen.dart';
+import 'dart:convert';
+import 'dart:math';
 
+import 'package:flutter/material.dart';
+import 'package:habit_tracker_ibm/country_list.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'habit_tracker_screen.dart';
 import 'login_screen.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -29,33 +34,45 @@ class RegisterScreenState extends State<RegisterScreen> {
     'Journal',
     'Walk 10,000 Steps'
   ];
+  final Map<String, Color> _habitColors = {
+    'Amber': Colors.amber,
+    'Red Accent': Colors.redAccent,
+    'Light Blue': Colors.lightBlue,
+    'Light Green': Colors.lightGreen,
+    'Purple Accent': Colors.purpleAccent,
+    'Orange': Colors.orange,
+    'Teal': Colors.teal,
+    'Deep Purple': Colors.deepPurple,
+  };
 
   @override
   void initState() {
     super.initState();
-    _fetchCountries();
+    _loadCountries();
   }
 
-  Future<void> _fetchCountries() async {
-    List<String> subsetCountries = [
-      'United States',
-      'Canada',
-      'United Kingdom',
-      'Australia',
-      'India',
-      'Germany',
-      'France',
-      'Japan',
-      'China',
-      'Brazil',
-      'South Africa'
-    ];
+  Future<void> _loadCountries() async {
+    try {
+      List<String> countries = await fetchCountries();
+      setState(() {
+        _countries = countries;
+      });
+    } catch (e) {
+      // Handle error
+      _showToast('Error fetching countries');
+    }
+  }
 
-    setState(() {
-      _countries = subsetCountries;
-      _countries.sort();
-      _country = _countries.isNotEmpty ? _countries[0] : 'United States';
-    });
+  void _showToast(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content:
+            Text(message.isNotEmpty ? message : 'Please fill in all fields.'),
+        backgroundColor: Colors.redAccent,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.only(bottom: 16.0, left: 16.0, right: 16.0),
+      ),
+    );
   }
 
   void _register() async {
@@ -63,18 +80,32 @@ class RegisterScreenState extends State<RegisterScreen> {
     final username = _usernameController.text;
 
     if (username.isEmpty || name.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text('Error creating user, add information. Please try again.'),
-          backgroundColor: Colors.redAccent,
-          behavior: SnackBarBehavior.floating,
-          margin: const EdgeInsets.only(bottom: 16.0, left: 16.0, right: 16.0),
-        ),
-      );
+      _showToast('Please fill in all fields');
       return;
     }
 
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+
+    // Assign random colors to selected habits.
+    Map<String, String> selectedHabitsMap = {};
+    final random = Random();
+    final colorKeys = _habitColors.keys.toList();
+
+    for (var habit in selectedHabits) {
+      var randomColor =
+          _habitColors[colorKeys[random.nextInt(colorKeys.length)]]!;
+      selectedHabitsMap[habit] = randomColor.value.toRadixString(16);
+    }
+
+    // Save user information and habits to shared preferences.
+    await prefs.setString('name', name);
+    await prefs.setString('username', username);
+    await prefs.setDouble('age', _age);
+    await prefs.setString('country', _country);
+    await prefs.setString('selectedHabitsMap', jsonEncode(selectedHabitsMap));
+    // await prefs.setStringList('selectedHabits', selectedHabits);
+
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -83,12 +114,22 @@ class RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  void _toggleHabitSelection(String habit) {
+    setState(() {
+      if (selectedHabits.contains(habit)) {
+        selectedHabits.remove(habit);
+      } else {
+        selectedHabits.add(habit);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.blue.shade700,
-        title: const Text(
+        title: Text(
           'Register',
           style: TextStyle(
             fontSize: 32,
@@ -97,7 +138,7 @@ class RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.pushReplacement(
               context,
@@ -122,12 +163,12 @@ class RegisterScreenState extends State<RegisterScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildInputField(_nameController, 'Name', Icons.person),
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
                 _buildInputField(
                     _usernameController, 'Username', Icons.alternate_email),
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
                 Text('Age: ${_age.round()}',
-                    style: const TextStyle(color: Colors.white, fontSize: 18)),
+                    style: TextStyle(color: Colors.white, fontSize: 18)),
                 Slider(
                   value: _age,
                   min: 21,
@@ -141,10 +182,10 @@ class RegisterScreenState extends State<RegisterScreen> {
                     });
                   },
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: 10),
                 _buildCountryDropdown(),
-                const SizedBox(height: 10),
-                const Text('Select Your Habits',
+                SizedBox(height: 10),
+                Text('Select Your Habits',
                     style: TextStyle(color: Colors.white, fontSize: 18)),
                 Wrap(
                   spacing: 10,
@@ -152,10 +193,10 @@ class RegisterScreenState extends State<RegisterScreen> {
                   children: availableHabits.map((habit) {
                     final isSelected = selectedHabits.contains(habit);
                     return GestureDetector(
-                      onTap: () {},
+                      onTap: () => _toggleHabitSelection(habit),
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 10),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                         decoration: BoxDecoration(
                           color:
                               isSelected ? Colors.blue.shade600 : Colors.white,
@@ -174,7 +215,7 @@ class RegisterScreenState extends State<RegisterScreen> {
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 Center(
                   child: ElevatedButton(
                     onPressed: _register,
@@ -183,10 +224,10 @@ class RegisterScreenState extends State<RegisterScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30.0),
                       ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 80, vertical: 15),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 80, vertical: 15),
                     ),
-                    child: const Text(
+                    child: Text(
                       'Register',
                       style: TextStyle(
                         fontSize: 18,
@@ -217,8 +258,7 @@ class RegisterScreenState extends State<RegisterScreen> {
           prefixIcon: Icon(icon, color: Colors.blue.shade700),
           hintText: hint,
           border: InputBorder.none,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          contentPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         ),
       ),
     );
@@ -226,7 +266,7 @@ class RegisterScreenState extends State<RegisterScreen> {
 
   Widget _buildCountryDropdown() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
+      padding: EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(30),
@@ -235,7 +275,7 @@ class RegisterScreenState extends State<RegisterScreen> {
         value: _country,
         icon: Icon(Icons.arrow_drop_down, color: Colors.blue.shade700),
         isExpanded: true,
-        underline: const SizedBox(),
+        underline: SizedBox(),
         items: _countries.map((String value) {
           return DropdownMenuItem<String>(
             value: value,

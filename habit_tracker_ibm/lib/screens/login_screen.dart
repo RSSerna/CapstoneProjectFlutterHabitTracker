@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:habit_tracker_ibm/screens/habit_tracker_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'register_screen.dart';
 
@@ -18,14 +19,24 @@ class LoginScreenState extends State<LoginScreen> {
   final String defaultUsername = 'testuser';
   final String defaultPassword = 'password123';
 
-  void _login() {
-    // The login logic goes here
-    print("login logic here");
+  @override
+  void initState() {
+    super.initState();
+    _usernameController.text = defaultUsername;
+    _passwordController.text = defaultPassword;
+  }
 
+  void _login() async {
     final username = _usernameController.text;
     final password = _passwordController.text;
-
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    // Check against default credentials
     if (username == defaultUsername && password == defaultPassword) {
+      await prefs.setString('name', 'Test User');
+      await prefs.setString('username', 'testuser');
+      await prefs.setDouble('age', 25);
+      await prefs.setString('country', 'United States');
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
@@ -33,6 +44,9 @@ class LoginScreenState extends State<LoginScreen> {
         ),
       );
     } else {
+      //empty out shared preferences
+      await prefs.clear();
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error with Credentials. Please try again.'),
