@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:habit_tracker_ibm/screens/habit_tracker_screen.dart';
 
 import 'login_screen.dart';
 
@@ -58,8 +59,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   void _register() async {
-    // dummy for now
-    print("registration logic here");
+    final name = _nameController.text;
+    final username = _usernameController.text;
+
+    if (username.isEmpty || name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content:
+              Text('Error creating user, add information. Please try again.'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.only(bottom: 16.0, left: 16.0, right: 16.0),
+        ),
+      );
+      return;
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HabitTrackerScreen(username: username),
+      ),
+    );
   }
 
   @override

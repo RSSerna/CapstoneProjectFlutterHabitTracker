@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:habit_tracker_ibm/screens/habit_tracker_screen.dart';
 
 import 'register_screen.dart';
 
@@ -20,6 +21,27 @@ class _LoginScreenState extends State<LoginScreen> {
   void _login() {
     // The login logic goes here
     print("login logic here");
+
+    final username = _usernameController.text;
+    final password = _passwordController.text;
+
+    if (username == defaultUsername && password == defaultPassword) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => HabitTrackerScreen(username: username),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error with Credentials. Please try again.'),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.only(bottom: 16.0, left: 16.0, right: 16.0),
+        ),
+      );
+    }
   }
 
   @override
