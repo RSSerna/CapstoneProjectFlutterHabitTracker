@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:habit_tracker_ibm/country_list.dart';
+import 'package:habit_tracker_ibm/screens/toast.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'habit_tracker_screen.dart';
@@ -59,20 +60,9 @@ class RegisterScreenState extends State<RegisterScreen> {
       });
     } catch (e) {
       // Handle error
-      _showToast('Error fetching countries');
+      if (!mounted) return;
+      showToast(message: 'Error fetching countries', context: context);
     }
-  }
-
-  void _showToast(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content:
-            Text(message.isNotEmpty ? message : 'Please fill in all fields.'),
-        backgroundColor: Colors.redAccent,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.only(bottom: 16.0, left: 16.0, right: 16.0),
-      ),
-    );
   }
 
   void _register() async {
@@ -80,7 +70,7 @@ class RegisterScreenState extends State<RegisterScreen> {
     final username = _usernameController.text;
 
     if (username.isEmpty || name.isEmpty) {
-      _showToast('Please fill in all fields');
+      showToast(message: 'Please fill in all fields', context: context);
       return;
     }
 

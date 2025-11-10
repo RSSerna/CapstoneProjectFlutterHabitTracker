@@ -1,6 +1,9 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:habit_tracker_ibm/screens/login_screen.dart';
+import 'package:habit_tracker_ibm/screens/personal_info_screen.dart';
+import 'package:habit_tracker_ibm/screens/reports_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'add_habit_screen.dart';
@@ -85,7 +88,7 @@ class HabitTrackerScreenState extends State<HabitTrackerScreen> {
               decoration: BoxDecoration(
                 color: Colors.blue.shade700,
               ),
-              child: Text(
+              child: const Text(
                 'Menu',
                 style: TextStyle(
                   color: Colors.white,
@@ -95,24 +98,56 @@ class HabitTrackerScreenState extends State<HabitTrackerScreen> {
               ),
             ),
             ListTile(
-              leading: Icon(Icons.settings),
-              title: Text('Configure'),
+              leading: const Icon(Icons.settings),
+              title: const Text('Configure'),
+              onTap: () async {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const AddHabitScreen(),
+                  ),
+                ).then((updatedHabits) {
+                  _loadUserData(); // Reload data after returning
+                });
+              },
             ),
             ListTile(
-              leading: Icon(Icons.person),
-              title: Text('Personal Info'),
+              leading: const Icon(Icons.person),
+              title: const Text('Personal Info'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const PersonalInfoScreen()),
+                ).then((_) {
+                  _loadUserData(); // Reload data after returning
+                });
+              },
             ),
             ListTile(
-              leading: Icon(Icons.analytics),
-              title: Text('Reports'),
+              leading: const Icon(Icons.analytics),
+              title: const Text('Reports'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const ReportsScreen()),
+                );
+              },
             ),
             ListTile(
               leading: Icon(Icons.notifications),
               title: Text('Notifications'),
             ),
             ListTile(
-              leading: Icon(Icons.logout),
-              title: Text('Sign Out'),
+              leading: const Icon(Icons.logout),
+              title: const Text('Sign Out'),
+              onTap: () {
+                _signOut(context);
+              },
             ),
           ],
         ),
@@ -254,6 +289,15 @@ class HabitTrackerScreenState extends State<HabitTrackerScreen> {
               child: Icon(Icons.add),
             )
           : null,
+    );
+  }
+
+  void _signOut(BuildContext context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => LoginScreen()),
     );
   }
 
